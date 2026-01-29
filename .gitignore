@@ -144,6 +144,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Miniconda/Anaconda
+miniconda3/
+miniconda/
+anaconda3/
+Miniconda3-latest-Linux-x86_64.sh
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -205,3 +211,4 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
