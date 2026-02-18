@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+deepseek_dual.py — Run a single prompt against multiple local DeepSeek R1 Distill Qwen models
+(7B, 1.5B, and optionally 32B) via Hugging Face transformers. Prints both models' responses
+side-by-side. Supports --rationale (extra short rationale), --include-32b, temperature/sampling,
+and trust_remote_code.
+"""
 import argparse
 import re
 from typing import Any, Dict, List, Optional
@@ -9,12 +15,6 @@ from transformers import pipeline
 MODEL_7B = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 MODEL_1_5B = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
 MODEL_32B = "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
-
-
-# def _strip_think(text: str) -> str:
-#     # Remove any <think>...</think> blocks if the model emits them.
-#     return re.sub(r"<think>.*?<\/think>", "", text, flags=re.DOTALL).strip()
-
 
 def _extract_generated_text(result: List[Dict[str, Any]]) -> str:
     if not result:
@@ -113,9 +113,7 @@ def main() -> None:
     args = parser.parse_args()
 
     system_prompt = (
-        "You are a helpful assistant. Provide concise answers. "
-        "Do not reveal chain-of-thought. If asked for reasoning, "
-        "give a short, high-level rationale without step-by-step details."
+        "You are a helpful assistant"
     )
 
     print("== DeepSeek R1 Distill Qwen 7B ==")

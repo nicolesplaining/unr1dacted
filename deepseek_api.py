@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""
+deepseek_api.py — CLI to call the DeepSeek cloud API using the OpenAI-compatible client.
+Reads DEEPSEEK_API_KEY from environment or .env. Accepts a prompt and optional --model,
+--temperature, --max_tokens, and --system; prints the model's reply or an error.
+"""
 import os
 import argparse
 from openai import OpenAI
