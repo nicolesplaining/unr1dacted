@@ -28,28 +28,43 @@ def compute_counts(results: list[dict]) -> tuple[list[str], list[int], list[int]
         counts[subject][label] += 1
 
     subjects = sorted(counts.keys())
-    type_1_counts = [counts[s]["type_1"] for s in subjects]
-    type_2_counts = [counts[s]["type_2"] for s in subjects]
-    return subjects, type_1_counts, type_2_counts
+    type_1_pct: list[int] = []
+    type_2_pct: list[int] = []
+    for subject in subjects:
+        c1 = counts[subject]["type_1"]
+        c2 = counts[subject]["type_2"]
+        total = c1 + c2
+        if total == 0:
+            type_1_pct.append(0)
+            type_2_pct.append(0)
+        else:
+            # Round type_1 to nearest integer and set type_2 so stacks sum to 100.
+            c1_pct = round((c1 / total) * 100.0)
+            c2_pct = 100 - c1_pct
+            type_1_pct.append(c1_pct)
+            type_2_pct.append(c2_pct)
+    return subjects, type_1_pct, type_2_pct
 
 
-def plot(subjects: list[str], type_1_counts: list[int], type_2_counts: list[int], out_path: Path) -> None:
+def plot(subjects: list[str], type_1_pct: list[float], type_2_pct: list[float], out_path: Path) -> None:
     if not subjects:
         raise ValueError("No type_1/type_2 records found in input JSON.")
 
     x = np.arange(len(subjects))
-    width = 0.42
+    width = 0.6
 
-    fig, ax = plt.subplots(figsize=(16, 8))
-    ax.bar(x - width / 2, type_1_counts, width, label="type_1")
-    ax.bar(x + width / 2, type_2_counts, width, label="type_2")
+    fig, ax = plt.subplots(figsize=(18, 10))
+    ax.bar(x, type_1_pct, width, label="type_1")
+    ax.bar(x, type_2_pct, width, bottom=type_1_pct, label="type_2")
 
-    ax.set_title("Type 1 vs Type 2 Counts by Subject")
-    ax.set_xlabel("Subject")
-    ax.set_ylabel("Count")
+    ax.set_title("Type 1 vs Type 2 Censorship Count by Topic", fontsize=22)
+    ax.set_xlabel("Topic", fontsize=16)
+    ax.set_ylabel("Percent", fontsize=16)
     ax.set_xticks(x)
-    ax.set_xticklabels(subjects, rotation=45, ha="right")
-    ax.legend()
+    ax.set_xticklabels(subjects, rotation=45, ha="right", fontsize=13)
+    ax.tick_params(axis="y", labelsize=13)
+    ax.set_ylim(0, 100)
+    ax.legend(fontsize=14)
     ax.grid(axis="y", linestyle="--", alpha=0.3)
     fig.tight_layout()
 
@@ -64,8 +79,8 @@ def main() -> None:
     if not isinstance(results, list):
         raise ValueError("Expected 'results' list in input JSON.")
 
-    subjects, type_1_counts, type_2_counts = compute_counts(results)
-    plot(subjects, type_1_counts, type_2_counts, OUTPUT_PNG)
+    subjects, type_1_pct, type_2_pct = compute_counts(results)
+    plot(subjects, type_1_pct, type_2_pct, OUTPUT_PNG)
     print(f"Saved chart to: {OUTPUT_PNG}")
 
 
