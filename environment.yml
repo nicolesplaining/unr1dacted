@@ -8,3 +8,6 @@ dependencies:
   - pytorch
   - sentencepiece
   - transformers
+  - pyarrow
+  - pip:
+    - "datasets>=2.18.0"
