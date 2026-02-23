@@ -48,20 +48,6 @@ def load_input_payload(path: Path) -> dict[str, Any]:
     return payload
 
 
-def load_existing_results(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {"metadata": {}, "results": []}
-
-    existing = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(existing, dict):
-        raise ValueError(f"Expected object in existing results file: '{path}'")
-    if "results" not in existing or not isinstance(existing["results"], list):
-        raise ValueError(f"Existing file '{path}' is missing a valid 'results' list.")
-    if "metadata" not in existing or not isinstance(existing["metadata"], dict):
-        existing["metadata"] = {}
-    return existing
-
-
 def save_results(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + ".tmp")
@@ -135,13 +121,8 @@ def main() -> None:
             "DEEPSEEK_API_KEY not set. Export it or add it to a .env file."
         )
 
-    source_payload = load_input_payload(args.input)
-
-    if args.output.exists():
-        payload = load_existing_results(args.output)
-    else:
-        # Start from the full original payload so output preserves all input fields.
-        payload = source_payload
+    # Always start fresh from input payload on each run.
+    payload = load_input_payload(args.input)
 
     prepare_results_rows(payload)
 
@@ -160,14 +141,8 @@ def main() -> None:
 
     client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
 
-    to_process = [
-        row
-        for row in payload["results"]
-        if isinstance(row, dict)
-        and row.get("leetspeak_response") is None
-        and row.get("leetspeak_error") is None
-    ]
-    already_processed = len(payload["results"]) - len(to_process)
+    to_process = [row for row in payload["results"] if isinstance(row, dict)]
+    already_processed = 0
     print(
         f"Loaded {len(payload['results'])} prompts, {already_processed} already processed, "
         f"{len(to_process)} remaining."
@@ -186,13 +161,7 @@ def main() -> None:
             response = client.chat.completions.create(
                 model=args.model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": (
-                            f"{args.system}\n"
-                            'Begin your response with "<think>\\n".'
-                        ),
-                    },
+                    {"role": "system", "content": args.system},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=args.temperature,
