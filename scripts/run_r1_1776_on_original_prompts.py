@@ -14,11 +14,21 @@ from pathlib import Path
 from typing import Any
 
 from transformers import pipeline
+from transformers.utils import import_utils
 
 
 MODEL_ID = "perplexity-ai/r1-1776"
 DEFAULT_INPUT_PATH = Path("results/deepseek_r1_ccp_sensitive_results_typed_cleaned_leetspeak.json")
 DEFAULT_OUTPUT_PATH = Path("results/deepseek_r1_ccp_sensitive_results_typed_cleaned_leetspeak_r1_1776.json")
+DEFAULT_THINK_PREFILL = "<think>\n"
+
+
+# Compatibility shim for model remote code that expects this helper in older transformers.
+if not hasattr(import_utils, "is_torch_fx_available"):
+    def _is_torch_fx_available() -> bool:
+        return False
+
+    import_utils.is_torch_fx_available = _is_torch_fx_available
 
 
 def load_payload(path: Path) -> dict[str, Any]:
@@ -92,7 +102,10 @@ def main() -> None:
             save_payload(args.output, payload)
             continue
 
-        messages = [{"role": "user", "content": prompt}]
+        messages = [
+            {"role": "user", "content": prompt},
+            {"role": "assistant", "content": DEFAULT_THINK_PREFILL},
+        ]
         try:
             out = pipe(
                 messages,
